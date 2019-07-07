@@ -76,7 +76,7 @@ namespace Xamarin.Forms.Platform.iOS
 			}
 		}
 
-		internal static UIModalPresentationStyle ToNativeModalPresentationStyle(this PlatformConfiguration.iOSSpecific.UIModalPresentationStyle style)
+		public static UIModalPresentationStyle ToNativeModalPresentationStyle(this PlatformConfiguration.iOSSpecific.UIModalPresentationStyle style)
 		{
 			switch (style)
 			{
@@ -84,6 +84,8 @@ namespace Xamarin.Forms.Platform.iOS
 					return UIModalPresentationStyle.FormSheet;
 				case PlatformConfiguration.iOSSpecific.UIModalPresentationStyle.FullScreen:
 					return UIModalPresentationStyle.FullScreen;
+				case PlatformConfiguration.iOSSpecific.UIModalPresentationStyle.OverFullScreen:
+					return UIModalPresentationStyle.OverFullScreen;
 				default:
 					throw new ArgumentOutOfRangeException(nameof(style));
 			}
