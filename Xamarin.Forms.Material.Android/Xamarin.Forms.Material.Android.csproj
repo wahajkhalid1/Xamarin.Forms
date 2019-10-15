@@ -97,10 +97,10 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <TransformFile Include="Resources\color-v23\white_disabled_material.xml">
+    <AndroidResource Include="Resources\color-v23\white_disabled_material.xml">
       <Generator>MSBuild:UpdateGeneratedFiles</Generator>
       <SubType>Designer</SubType>
-    </TransformFile>
+    </AndroidResource>
   </ItemGroup>
   <ItemGroup>
     <AndroidResource Include="Resources\drawable\MaterialActivityIndicatorBackground.xml">
