@@ -19,6 +19,7 @@ using Xamarin.Forms.Platform.Android.AppCompat;
 using Xamarin.Forms.PlatformConfiguration.AndroidSpecific;
 using Xamarin.Forms.PlatformConfiguration.AndroidSpecific.AppCompat;
 using AColor = Android.Graphics.Color;
+using AView = Android.Views.View;
 using ARelativeLayout = Android.Widget.RelativeLayout;
 using Xamarin.Forms.Internals;
 using System.Runtime.CompilerServices;
@@ -186,7 +187,6 @@ namespace Xamarin.Forms.Platform.Android
 			PreviousActivityDestroying.Wait();
 
 			Profile.FramePartition(nameof(SetMainPage));
-
 			SetMainPage();
 
 			Profile.FrameEnd();
@@ -213,6 +213,8 @@ namespace Xamarin.Forms.Platform.Android
 			ActivationFlags flags)
 		{
 			Profile.FrameBegin();
+
+			//ToolbarResource = Resource.Layout.Toolbar;
 			_activityCreated = true;
 			if (!AllowFragmentRestore)
 			{
@@ -225,52 +227,11 @@ namespace Xamarin.Forms.Platform.Android
 			Profile.FramePartition("Xamarin.Android.OnCreate");
 			base.OnCreate(savedInstanceState);
 
-			Profile.FramePartition("SetSupportActionBar");
-			AToolbar bar = null;
-
-#if __ANDROID_29__
-			if (ToolbarResource == 0)
-			{
-				ToolbarResource = Resource.Layout.Toolbar;
-			}
-
-			if (TabLayoutResource == 0)
-			{
-				TabLayoutResource = Resource.Layout.Tabbar;
-			}
-#endif
-
+			AToolbar bar;
 			if (ToolbarResource != 0)
 			{
-				try
-				{
-					bar = LayoutInflater.Inflate(ToolbarResource, null).JavaCast<AToolbar>();
-				}
-#if __ANDROID_29__
-				catch (global::Android.Views.InflateException ie)
-				{
-					if ((ie.Cause is Java.Lang.ClassNotFoundException || ie.Cause.Cause is Java.Lang.ClassNotFoundException) &&
-						ie.Message.Contains("Error inflating class android.support.v7.widget.Toolbar") &&
-						this.TargetSdkVersion() >= 29)
-					{
-						Internals.Log.Warning(nameof(FormsAppCompatActivity),
-							"Toolbar layout needs to be updated from android.support.v7.widget.Toolbar to androidx.appcompat.widget.Toolbar. " +
-							"Tabbar layout need to be updated from android.support.design.widget.TabLayout to com.google.android.material.tabs.TabLayout. " +
-							"Or if you haven't made any changes to the default Toolbar and Tabbar layouts they can just be deleted.");
-
-						ToolbarResource = Resource.Layout.FallbackToolbarDoNotUse;
-						TabLayoutResource = Resource.Layout.FallbackTabbarDoNotUse;
-
-						bar = LayoutInflater.Inflate(ToolbarResource, null).JavaCast<AToolbar>();
-					}
-					else
-						throw;
-#else
-				catch
-				{
-					throw;
-#endif
-				}
+				Profile.FramePartition("Inflate ToolbarResource");
+				bar = Anticipator.InflateResource(this, ToolbarResource).JavaCast<AToolbar>();
 
 				if (bar == null)
 #if __ANDROID_29__
@@ -281,10 +242,15 @@ namespace Xamarin.Forms.Platform.Android
 			}
 			else 
 			{
-				bar = new AToolbar(this);
+				Profile.FramePartition("Activate Toolbar");
+				bar = Anticipator.Activate(this, typeof(AToolbar)).JavaCast<AToolbar>();
 			}
 
+			Profile.FramePartition("Set ActionBar");
 			SetSupportActionBar(bar);
+
+			Profile.FramePartition("Activate ARelativeLayout");
+			_layout = (ARelativeLayout)Anticipator.Activate(BaseContext, typeof(ARelativeLayout));
 
 			Profile.FramePartition("SetContentView");
 			_layout = new ARelativeLayout(BaseContext);
@@ -296,7 +262,8 @@ namespace Xamarin.Forms.Platform.Android
 			_previousState = _currentState;
 			_currentState = AndroidApplicationLifecycleState.OnCreate;
 
-			OnStateChanged();
+			if (_application != null)
+				OnStateChanged();
 
 			Profile.FramePartition("Forms.IsLollipopOrNewer");
 			if (Forms.IsLollipopOrNewer)
@@ -307,9 +274,6 @@ namespace Xamarin.Forms.Platform.Android
 					Profile.FramePartition("Set DrawsSysBarBkgrnds");
 					Window.AddFlags(WindowManagerFlags.DrawsSystemBarBackgrounds);
 				}
-			}
-			if (Forms.IsLollipopOrNewer)
-			{
 				// Listen for the device going into power save mode so we can handle animations being disabled
 				Profile.FramePartition("Allocate PowerSaveModeReceiver");
 				_powerSaveModeBroadcastReceiver = new PowerSaveModeBroadcastReceiver();
@@ -565,9 +529,7 @@ namespace Xamarin.Forms.Platform.Android
 		public static event BackButtonPressedEventHandler BackPressed;
 
 		public static int TabLayoutResource { get; set; }
-
 		public static int ToolbarResource { get; set; }
-
 #endregion
 	}
 }
