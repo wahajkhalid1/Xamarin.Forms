@@ -23,6 +23,7 @@ using FImageRenderer = Xamarin.Forms.Platform.Android.FastRenderers.ImageRendere
 using FFrameRenderer = Xamarin.Forms.Platform.Android.FastRenderers.FrameRenderer;
 using AFragment = Android.Support.V4.App.Fragment;
 using AToolbar = Android.Support.V7.Widget.Toolbar;
+using System.Linq;
 
 namespace Xamarin.Forms.Platform.Android
 {
@@ -147,7 +148,7 @@ namespace Xamarin.Forms.Platform.Android
 				_type = type;
 			}
 
-			public object Get()
+			object IAnticipatedValue.Get()
 			{
 				RuntimeHelpers.RunClassConstructor(_type.TypeHandle);
 				return null;
@@ -281,7 +282,7 @@ namespace Xamarin.Forms.Platform.Android
 				Factory = activator;
 			}
 
-			public object Get()
+			object IAnticipatedValue.Get()
 			{
 				if (Factory == null)
 					return Activator.CreateInstance(Type, Context);
