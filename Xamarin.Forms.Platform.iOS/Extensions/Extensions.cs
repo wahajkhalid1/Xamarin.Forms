@@ -86,6 +86,10 @@ namespace Xamarin.Forms.Platform.iOS
 					return UIModalPresentationStyle.FullScreen;
 				case PlatformConfiguration.iOSSpecific.UIModalPresentationStyle.OverFullScreen:
 					return UIModalPresentationStyle.OverFullScreen;
+				case PlatformConfiguration.iOSSpecific.UIModalPresentationStyle.PageSheet:
+					return UIModalPresentationStyle.PageSheet;
+				case PlatformConfiguration.iOSSpecific.UIModalPresentationStyle.Automatic:
+					return UIModalPresentationStyle.Automatic;
 				default:
 					throw new ArgumentOutOfRangeException(nameof(style));
 			}

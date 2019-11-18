@@ -127,7 +127,7 @@ namespace Xamarin.Forms.Platform.iOS
 			modal.DisposeModalAndChildRenderers();
 
 			if (IsModalPresentedOverContext(modal))
-				GetCurentPage(Page)?.SendAppearing();
+				Page.GetCurrentPage()?.SendAppearing();
 
 			return modal;
 		}
@@ -161,8 +161,27 @@ namespace Xamarin.Forms.Platform.iOS
 		{
 			EndEditing();
 
-			if (_appeared && IsModalPresentedOverContext(modal))
-				GetCurentPage(Page)?.SendDisappearing();
+			var elementConfiguration = modal as IElementConfiguration<Page>;
+
+			var presentationStyle = elementConfiguration?.On<PlatformConfiguration.iOS>()?.ModalPresentationStyle().ToNativeModalPresentationStyle();
+
+			bool shouldFire = true;
+
+			if (Forms.IsiOS13OrNewer)
+			{
+				if (presentationStyle == UIKit.UIModalPresentationStyle.FullScreen)
+					shouldFire = false; //this is mainly for backwards compatibility
+			}
+			else
+			{
+				if (presentationStyle == UIKit.UIModalPresentationStyle.Automatic)
+					shouldFire = false;
+				else if (presentationStyle == UIKit.UIModalPresentationStyle.FullScreen)
+					shouldFire = false; //this is mainly for backwards compatibility
+			}
+
+			if (_appeared && shouldFire)
+				Page.GetCurrentPage()?.SendDisappearing();
 
 			_modals.Add(modal);
 
@@ -621,17 +640,6 @@ namespace Xamarin.Forms.Platform.iOS
 			(Page.Parent as IDisposable)?.Dispose();
 		}
 
-		Page GetCurentPage(Page currentPage)
-		{
-			if (_modals.LastOrDefault() is Page modal)
-				return modal;
-			else if (currentPage is MasterDetailPage mdp)
-				return GetCurentPage(mdp.Detail);
-			else if (currentPage is IPageContainer<Page> pc)
-				return GetCurentPage(pc.CurrentPage);
-			else
-				return currentPage;
-		}
 
 		static bool IsModalPresentedOverContext(Page modal)
 		{

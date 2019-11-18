@@ -4,6 +4,8 @@
 	{
 		FullScreen,
 		FormSheet,
-		OverFullScreen
+		OverFullScreen,
+		PageSheet,
+		Automatic
 	}
 }
