@@ -12,6 +12,10 @@ namespace Xamarin.Forms
 		static readonly char[] _pathSeparators = { '/', '\\' };
 		const string _pathSeparator = "/";
 
+		static internal string Route = Routing.GenerateImplicitRoute("shell");
+		static internal string RouteHost => "shell";
+		static internal string RouteScheme => "app";
+
 		internal static Uri FormatUri(Uri path)
 		{
 			if (path.IsAbsoluteUri)
@@ -52,35 +56,23 @@ namespace Xamarin.Forms
 
 			var segments = new List<string>(pathAndQuery.Split(_pathSeparators, StringSplitOptions.RemoveEmptyEntries));
 
+			if (segments.Count > 0 && segments[0] != (shell?.RouteHost ?? RouteHost))
+				segments.Insert(0, (shell?.RouteHost ?? RouteHost));
 
-			if (segments[0] != shell.RouteHost)
-				segments.Insert(0, shell.RouteHost);
-
-			if (segments[1] != shell.Route)
-				segments.Insert(1, shell.Route);
+			if (segments.Count > 1 && segments[1] != (shell?.Route ?? Route))
+				segments.Insert(1, (shell?.Route ?? Route));
 
 			var path = String.Join(_pathSeparator, segments.ToArray());
-			string uri = $"{shell.RouteScheme}://{path}";
+			string uri = $"{(shell?.RouteScheme ?? RouteScheme)}://{path}";
 
 			return new Uri(uri);
 		}
 
-		internal static NavigationRequest GetNavigationRequest(Shell shell, Uri uri, bool enableRelativeShellRoutes = false)
+		internal static ShellRouteState GetNavigationRequest(Shell shell, Uri uri, bool enableRelativeShellRoutes = false)
 		{
 			uri = FormatUri(uri);
-			// figure out the intent of the Uri
-			NavigationRequest.WhatToDoWithTheStack whatDoIDo = NavigationRequest.WhatToDoWithTheStack.PushToIt;
-			if (uri.IsAbsoluteUri)
-				whatDoIDo = NavigationRequest.WhatToDoWithTheStack.ReplaceIt;
-			else if (uri.OriginalString.StartsWith("//", StringComparison.Ordinal) || uri.OriginalString.StartsWith("\\\\", StringComparison.Ordinal))
-				whatDoIDo = NavigationRequest.WhatToDoWithTheStack.ReplaceIt;
-			else
-				whatDoIDo = NavigationRequest.WhatToDoWithTheStack.PushToIt;
-
 			Uri request = ConvertToStandardFormat(shell, uri);
-
 			var possibleRouteMatches = GenerateRoutePaths(shell, request, uri, enableRelativeShellRoutes);
-
 
 			if (possibleRouteMatches.Count == 0)
 				throw new ArgumentException($"unable to figure out route for: {uri}", nameof(uri));
@@ -100,17 +92,50 @@ namespace Xamarin.Forms
 			}
 
 			var theWinningRoute = possibleRouteMatches[0];
-			RequestDefinition definition =
-				new RequestDefinition(
-					ConvertToStandardFormat(shell, CreateUri(theWinningRoute.PathFull)),
-					theWinningRoute.Item,
-					theWinningRoute.Section,
-					theWinningRoute.Content,
-					theWinningRoute.GlobalRouteMatches);
+			List<PathPart> pathParts = new List<PathPart>();
+			ShellRouteState returnValue = shell.RouteState ?? new ShellRouteState();
 
-			NavigationRequest navigationRequest = new NavigationRequest(definition, whatDoIDo, request.Query, request.Fragment);
+			if (theWinningRoute.Item == null)
+			{
+				for (var i = 0; i < theWinningRoute.GlobalRouteMatches.Count; i++)
+				{
+					var item = new ShellContent()
+					{
+						Route = theWinningRoute.GlobalRouteMatches[i]
+					};
 
-			return navigationRequest;
+					pathParts.Add(new PathPart(item, Shell.GetNavigationParameters(item, request.Query, theWinningRoute.GlobalRouteMatches.Count == (i + 1))));
+				}
+
+				returnValue = returnValue.Add(pathParts);
+			}
+			else
+			{
+				var shellItem = theWinningRoute.Item;
+				ShellSection shellSection = theWinningRoute.Section;
+
+				if (shellSection == null)
+					shellSection = shellItem.Items[0];
+
+				ShellContent shellContent = theWinningRoute.Content;
+				if (shellContent == null)
+					shellContent = shellSection.Items[0];
+
+				pathParts.Add(new PathPart(shellItem, Shell.GetNavigationParameters(shellItem, request.Query, false)));
+				pathParts.Add(new PathPart(shellSection, Shell.GetNavigationParameters(shellSection, request.Query, false)));
+
+				if (shellContent != null)
+					pathParts.Add(new PathPart(shellContent, Shell.GetNavigationParameters(shellContent, request.Query, theWinningRoute.GlobalRouteMatches.Count == 0)));
+
+				for (var i = 0; i < theWinningRoute.GlobalRouteMatches.Count; i++)
+				{
+					var item = new ShellContent() { Route = theWinningRoute.GlobalRouteMatches[i] };
+					pathParts.Add(new PathPart(item, Shell.GetNavigationParameters(item, request.Query, theWinningRoute.GlobalRouteMatches.Count == (i + 1))));
+				}
+				returnValue = new ShellRouteState(new RoutePath(pathParts, Shell.GetNavigationParameters(shell, request.Query, false)));
+			}
+
+			return returnValue;
 		}
 
 		internal static List<RouteRequestBuilder> GenerateRoutePaths(Shell shell, Uri request)
@@ -121,6 +146,7 @@ namespace Xamarin.Forms
 
 		internal static List<RouteRequestBuilder> GenerateRoutePaths(Shell shell, Uri request, Uri originalRequest, bool enableRelativeShellRoutes)
 		{
+			enableRelativeShellRoutes = enableRelativeShellRoutes || shell.EnableRelativeShellRoutes;
 			var routeKeys = Routing.GetRouteKeys();
 			for (int i = 0; i < routeKeys.Length; i++)
 			{

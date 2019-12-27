@@ -54,17 +54,7 @@ namespace Xamarin.Forms
 			var template = ContentTemplate;
 			var content = Content;
 
-			Page result = null;
-			if (template == null)
-			{
-				if (content is Page page)
-					result = page;
-			}
-			else
-			{
-				result = ContentCache ?? (Page)template.CreateContent(content, this);
-				ContentCache = result;
-			}
+			Page result = ContentCache ?? ShellContentCreator.Create(new ShellContentCreateArgs(this));
 
 			if (result == null)
 				throw new InvalidOperationException($"No Content found for {nameof(ShellContent)}, Title:{Title}, Route {Route}");
@@ -72,8 +62,16 @@ namespace Xamarin.Forms
 			if (GetValue(QueryAttributesProperty) is IDictionary<string, string> delayedQueryParams)
 				result.SetValue(QueryAttributesProperty, delayedQueryParams);
 
+			if (result != ContentCache)
+				ContentCache = result;
+			
 			return result;
 		}
+
+		#region Navigation Interfaces
+		IShellContentCreator ShellContentCreator => (Parent.Parent.Parent as Shell).ShellContentCreator;
+		IShellPartAppearing ShellPartAppearing => (Parent.Parent.Parent as Shell).ShellPartAppearing;
+		#endregion
 
 		void IShellContentController.RecyclePage(Page page)
 		{
@@ -238,6 +236,9 @@ namespace Xamarin.Forms
 
 			if (Content is BindableObject bindable)
 				bindable.SetValue(QueryAttributesProperty, query);
+
+			if (ContentCache != Content && ContentCache is BindableObject contentCacheBo)
+				contentCacheBo.SetValue(QueryAttributesProperty, query);
 		}
 
 		static void OnQueryAttributesPropertyChanged(BindableObject bindable, object oldValue, object newValue)
