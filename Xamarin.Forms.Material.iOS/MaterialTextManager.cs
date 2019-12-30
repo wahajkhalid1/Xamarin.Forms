@@ -29,8 +29,10 @@ namespace Xamarin.Forms.Material.iOS
 		{
 			textField.TextInput.Font = fontElement?.ToUIFont();
 			textField.TypographyScheme.Subtitle1 = textField.TextInput.Font;
+#pragma warning disable CS0618 // Type or member is obsolete
 			TextFieldTypographyThemer.ApplyTypographyScheme(textField.TypographyScheme, textField.TextInput);
 			TextFieldTypographyThemer.ApplyTypographyScheme(textField.TypographyScheme, textField.ActiveTextInputController);
+#pragma warning restore CS0618 // Type or member is obsolete
 		}
 
 		public static void ApplyTheme(IMaterialTextField textField, IMaterialEntryRenderer element)
@@ -41,7 +43,9 @@ namespace Xamarin.Forms.Material.iOS
 			if (textField.ActiveTextInputController == null)
 				return;
 
+#pragma warning disable CS0618 // Type or member is obsolete
 			FilledTextFieldColorThemer.ApplySemanticColorScheme(textField.ColorScheme, (MTextInputControllerFilled)textField.ActiveTextInputController);
+#pragma warning restore CS0618 // Type or member is obsolete
 
 			var textColor = MaterialColors.GetEntryTextColor(element.TextColor);
 			var placeHolderColors = MaterialColors.GetPlaceHolderColor(element.PlaceholderColor, element.TextColor);

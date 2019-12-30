@@ -61,7 +61,7 @@ namespace Xamarin.Forms
 			BindableProperty.Create(nameof(Visual), typeof(IVisual), typeof(VisualElement), Forms.VisualMarker.MatchParent,
 									validateValue: (b, v) => v != null, propertyChanged: OnVisualChanged);
 
-		static IVisual _defaultVisual = Xamarin.Forms.VisualMarker.Default;
+		static IVisual _defaultVisual = Xamarin.Forms.VisualMarker.Material;
 		IVisual _effectiveVisual = _defaultVisual;
 
 		public IVisual Visual
