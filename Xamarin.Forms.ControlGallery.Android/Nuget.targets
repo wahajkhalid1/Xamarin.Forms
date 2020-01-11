@@ -1,0 +1,9 @@
+<Project>
+  <Import Project="..\Nuget.targets" Condition="'$(FromSource)' == 'false'" />
+  <ItemGroup>
+    <PackageReference Include="Xamarin.Forms.AppLinks" Version="$(XamarinFormsVersion)">
+    </PackageReference>
+  </ItemGroup>
+  <Import Condition="'$(Use2017)' == 'true'" Project="Nuget2017.Build.targets" />
+  <Import Condition="'$(Use2017)' != 'true'" Project="Nuget2019.Build.targets" />
+</Project>

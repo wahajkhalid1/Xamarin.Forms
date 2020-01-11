@@ -37,6 +37,7 @@ PowerShell:
 
 var target = Argument("target", "Default");
 var configuration = Argument("configuration", "Debug");
+var teamProject = Argument("TeamProject", "");
 
 var gitVersion = GitVersion();
 var majorMinorPatch = gitVersion.MajorMinorPatch;
@@ -56,17 +57,40 @@ string androidSDK_windows = "";//"https://aka.ms/xamarin-android-commercial-d15-
 string iOSSDK_windows = "";//"https://download.visualstudio.microsoft.com/download/pr/71f33151-5db4-49cc-ac70-ba835a9f81e2/d256c6c50cd80ec0207783c5c7a4bc2f/xamarin.visualstudio.apple.sdk.4.12.3.83.vsix";
 string macSDK_windows = "";
 
-monoMajorVersion = "6.8.0";
-monoPatchVersion = "";
+
+string androidSDK_macos = "";
+string monoSDK_macos = "";
+string iOSSDK_macos = "";
+string macSDK_macos = "";
+
+Information ("Team Project: {0}", teamProject);
+
+// VS 2019
+if(teamProject != "DevDiv")
+{
+    monoMajorVersion = "6.8.0";
+    monoPatchVersion = ""; 
+    androidSDK_macos = "https://aka.ms/xamarin-android-commercial-d16-4-macos";
+    iOSSDK_macos = $"https://bosstoragemirror.blob.core.windows.net/wrench/jenkins/d16-4/0d8fe219c727fc68d495c26823070b510a4aa474/36/package/notarized/xamarin.ios-13.8.3.0.pkg";
+    macSDK_macos = $"https://bosstoragemirror.blob.core.windows.net/wrench/jenkins/d16-4/0d8fe219c727fc68d495c26823070b510a4aa474/36/package/notarized/xamarin.mac-6.8.3.0.pkg";
+}
+else
+{
+    // VS2017
+    monoMajorVersion = "5.18.1";
+    monoPatchVersion = "";
+    androidSDK_macos = "https://aka.ms/xamarin-android-commercial-d15-9-macos";
+    iOSSDK_macos = $"https://bosstoragemirror.blob.core.windows.net/wrench/jenkins/xcode10.2/9c8d8e0a50e68d9abc8cd48fcd47a669e981fcc9/53/package/xamarin.ios-12.4.0.64.pkg";
+    macSDK_macos = $"https://bosstoragemirror.blob.core.windows.net/wrench/jenkins/xcode10.2/9c8d8e0a50e68d9abc8cd48fcd47a669e981fcc9/53/package/xamarin.mac-5.4.0.64.pkg";
+}
+
 if(String.IsNullOrWhiteSpace(monoPatchVersion))
     monoVersion = $"{monoMajorVersion}";
 else
     monoVersion = $"{monoMajorVersion}.{monoPatchVersion}";
+
+monoSDK_macos = $"https://download.mono-project.com/archive/{monoMajorVersion}/macos-10-universal/MonoFramework-MDK-{monoVersion}.macos10.xamarin.universal.pkg";
     
-string androidSDK_macos = "https://aka.ms/xamarin-android-commercial-d16-4-macos";
-string monoSDK_macos = $"https://download.mono-project.com/archive/{monoMajorVersion}/macos-10-universal/MonoFramework-MDK-{monoVersion}.macos10.xamarin.universal.pkg";
-string iOSSDK_macos = $"https://bosstoragemirror.blob.core.windows.net/wrench/jenkins/d16-4/0d8fe219c727fc68d495c26823070b510a4aa474/36/package/notarized/xamarin.ios-13.8.3.0.pkg";
-string macSDK_macos = $"https://bosstoragemirror.blob.core.windows.net/wrench/jenkins/d16-4/0d8fe219c727fc68d495c26823070b510a4aa474/36/package/notarized/xamarin.mac-6.8.3.0.pkg";
 
 string androidSDK = IsRunningOnWindows() ? androidSDK_windows : androidSDK_macos;
 string monoSDK = IsRunningOnWindows() ? monoSDK_windows : monoSDK_macos;

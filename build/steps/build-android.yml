@@ -43,7 +43,7 @@ jobs:
         inputs:
           targetType: 'filePath'
           filePath: 'build.sh'
-          arguments: --target provision
+          arguments: --target provision --TeamProject="$(System.TeamProject)"
 
       - task: UseDotNet@2
         displayName: 'Install .net core $(DOTNET_VERSION)'
@@ -60,11 +60,27 @@ jobs:
         condition: ne(variables['NUGET_VERSION'], '')
         inputs:
           versionSpec: $(NUGET_VERSION)
+  
+      - task: DownloadBuildArtifacts@0
+        displayName: 'Download build artifact nuget'
+        condition: eq(variables['System.TeamProject'], 'devdiv')
+        inputs:
+          artifactName: 'nuget'
+          downloadPath: 'Nuget'
+
+      - task: CopyFiles@2
+        displayName: 'Copy Files to: $(System.DefaultWorkingDirectory)'
+        condition: eq(variables['System.TeamProject'], 'devdiv')
+        inputs:
+          SourceFolder: 'Nuget/nuget/${{ parameters.buildConfiguration }}'
+          TargetFolder: 'Nuget'
 
       - task: NuGetCommand@2
         displayName: 'NuGet restore ${{ parameters.slnPath }}'
         inputs:
           restoreSolution:  ${{ parameters.slnPath }}
+          feedsToUse: config
+          nugetConfigPath: 'DevopsNuget.config'
 
       - task: MSBuild@1
         displayName: 'Build ${{ parameters.buildTaskPath  }}'
