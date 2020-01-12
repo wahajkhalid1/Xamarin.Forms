@@ -93,9 +93,9 @@ stages:
 
   - stage: android
     displayName: Build Android
-    ${{ if eq(parameters.UseNugets, true) }}:
+    ${{ if eq(variables['UseNugets'], 'true') }}:
       dependsOn: windows
-    ${{ if eq(parameters.UseNugets, false) }}:
+    ${{ if eq(variables['UseNugets'], 'false') }}:
       dependsOn: []
     jobs:   
       - template: build/steps/build-android.yml
@@ -105,9 +105,9 @@ stages:
 
   - stage: build_osx
     displayName: Build OSX
-    ${{ if eq(variables['System.TeamProject'], 'devdiv') }}:
+    ${{ if eq(variables['UseNugets'], 'true') }}:
       dependsOn: windows
-    ${{ if eq(variables['System.TeamProject'], 'public') }}:
+    ${{ if eq(variables['UseNugets'], 'false') }}:
       dependsOn: []
     jobs:
       - job: osx
