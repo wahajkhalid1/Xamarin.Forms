@@ -23,8 +23,6 @@ variables:
   value: true
 - name: DOTNET_VERSION
   value: 3.1.100
-- name: UseNugets
-  value: false
 
 resources:
   repositories:
@@ -61,6 +59,11 @@ schedules:
     include:
     - master
 
+parameters:
+- name: UseNugets
+  type: boolean
+  default: true
+
 stages:
   - stage: windows
     displayName: Build Windows
@@ -88,17 +91,25 @@ stages:
       steps:
         - template: build/steps/build-nuget.yml
 
-  - stage: android
-    displayName: Build Android
-    ${{ if eq(variables['UseNugets'], 'true') }}:
+  - ${{ if eq(variables['UseNugets'], 'true') }}:
+    - stage: android
+      displayName: Build Android
       dependsOn: windows
-    ${{ if eq(variables['UseNugets'], 'false') }}:
+      jobs:   
+        - template: build/steps/build-android.yml
+          parameters:
+            vmImage: $(macOSVmImage)
+            provisionatorPath : 'build/provisioning/provisioning.csx'
+
+  ${{ if eq(parameters.UseNugets, true) }}:
+    - stage: android
+      displayName: Build Android
       dependsOn: []
-    jobs:   
-      - template: build/steps/build-android.yml
-        parameters:
-          vmImage: $(macOSVmImage)
-          provisionatorPath : 'build/provisioning/provisioning.csx'
+      jobs:   
+        - template: build/steps/build-android.yml
+          parameters:
+            vmImage: $(macOSVmImage)
+            provisionatorPath : 'build/provisioning/provisioning.csx'
 
   - stage: build_osx
     displayName: Build OSX
