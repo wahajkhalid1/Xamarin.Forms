@@ -58,9 +58,9 @@ schedules:
   branches:
     include:
     - master
-    
+
 parameters:
-- name: runPerfTests
+- name: UseNugets
   type: boolean
   default: false
 
@@ -93,35 +93,15 @@ stages:
 
   - stage: android
     displayName: Build Android
-    ${{ if eq(variables['System.TeamProject'], 'devdiv') }}:
+    ${{ if eq(parameters.UseNugets, true) }}:
       dependsOn: windows
-    ${{ if eq(variables['System.TeamProject'], 'public') }}:
+    ${{ if eq(parameters.UseNugets, false) }}:
       dependsOn: []
     jobs:   
       - template: build/steps/build-android.yml
         parameters:
           vmImage: $(macOSVmImage)
           provisionatorPath : 'build/provisioning/provisioning.csx'
-
-      # - template: build/steps/build-android.yml
-      #   parameters:
-      #     name: android_preappcompact
-      #     displayName: Build Android [Pre-AppCompat]
-      #     vmImage: $(macOSVmImage)
-      #     targetFolder: Xamarin.Forms.ControlGallery.Android/preAppCompat
-      #     androidProjectArguments: '/t:"Rebuild;SignAndroidPackage" /p:DefineConstants="TRACE DEBUG FORMS_APPLICATION_ACTIVITY APP" /bl:$(Build.ArtifactStagingDirectory)/android-preappcompact.binlog'
-      #     buildConfiguration: $(DefaultBuildConfiguration)
-      #     provisionatorPath : 'build/provisioning/provisioning.csx'
-
-      # - template: build/steps/build-android.yml
-      #   parameters:
-      #     name: android_fast
-      #     displayName: Build Android [Fast Renderers]
-      #     vmImage: $(macOSVmImage)
-      #     targetFolder: Xamarin.Forms.ControlGallery.Android/newRenderers/
-      #     androidProjectArguments: '/t:"Rebuild;SignAndroidPackage" /p:DefineConstants="TRACE DEBUG TEST_EXPERIMENTAL_RENDERERS APP" /bl:$(Build.ArtifactStagingDirectory)/android-newrenderers.binlog'
-      #     buildConfiguration: $(DefaultBuildConfiguration)
-      #     provisionatorPath : 'build/provisioning/provisioning.csx'
 
   - stage: build_osx
     displayName: Build OSX
