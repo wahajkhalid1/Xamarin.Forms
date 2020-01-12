@@ -3,7 +3,6 @@ parameters:
   displayName: ''     # the human name
   vmImage: ''         # the VM image
   vmPool: ''         # the VM pool
-  targetFolder: ''    # the bootstrapper target
   dependsOn: []       # the dependiencies
   preBuildSteps: []   # any steps to run before the build
   postBuildSteps: []  # any additional steps to run after the build
@@ -11,7 +10,6 @@ parameters:
   buildTaskPath : 'Xamarin.Forms.Build.Tasks/Xamarin.Forms.Build.Tasks.csproj'
   androidPath : 'Xamarin.Forms.ControlGallery.Android'
   androidProjectPath : 'Xamarin.Forms.ControlGallery.Android/Xamarin.Forms.ControlGallery.Android.csproj'
-  androidProjectArguments : ''
   buildConfiguration : 'Debug'
   nugetVersion: $(NUGET_VERSION)
   monoVersion: $(MONO_VERSION)
@@ -26,6 +24,17 @@ jobs:
     pool:
       name: ${{ parameters.vmImage }}
     dependsOn: ${{ parameters.dependsOn }}
+    strategy:
+      matrix:
+        android_legacy:
+          androidProjectArguments: '/t:"Rebuild;SignAndroidPackage" /bl:$(Build.ArtifactStagingDirectory)/android-legacy.binlog'    
+          targetFolder: Xamarin.Forms.ControlGallery.Android/legacyRenderers/  
+        android_preAppCompat:
+          androidProjectArguments: '/t:"Rebuild;SignAndroidPackage" /p:DefineConstants="TRACE DEBUG FORMS_APPLICATION_ACTIVITY APP" /bl:$(Build.ArtifactStagingDirectory)/android-preappcompact.binlog'
+          targetFolder: Xamarin.Forms.ControlGallery.Android/preAppCompat/
+        android_newRenderers:
+          androidProjectArguments: '/t:"Rebuild;SignAndroidPackage" /p:DefineConstants="TRACE DEBUG TEST_EXPERIMENTAL_RENDERERS APP" /bl:$(Build.ArtifactStagingDirectory)/android-newrenderers.binlog'
+          targetFolder: Xamarin.Forms.ControlGallery.Android/newRenderers/
     steps:
       - checkout: self
         clean: true
@@ -93,14 +102,14 @@ jobs:
         inputs:
           solution: ${{ parameters.androidProjectPath }}
           configuration: ${{ parameters.buildConfiguration }}
-          msbuildArguments: ${{ parameters.androidProjectArguments }}
+          msbuildArguments: ${androidProjectArguments}
 
       - task: CopyFiles@2
         displayName: 'Copy ${{ parameters.name }}'
         inputs:
           SourceFolder: ${{ parameters.androidPath }}/bin/${{ parameters.buildConfiguration }}/
           Contents: '**/*.apk'
-          TargetFolder: ${{ parameters.targetFolder }}
+          TargetFolder: ${targetFolder}
           CleanTargetFolder: true
           OverWrite: true
 
@@ -108,8 +117,8 @@ jobs:
         displayName: 'Copy Android apk ${{ parameters.name }} for UITest'
         inputs:
           Contents: |
-            ${{ parameters.targetFolder }}/$(ApkName)
-          TargetFolder: ${{ parameters.apkTargetFolder }}
+            ${targetFolder}/$(ApkName)
+          TargetFolder: ${targetFolder}
           CleanTargetFolder: true
 
       - task: PublishBuildArtifacts@1
