@@ -6,7 +6,7 @@ stages:
   - stage: windows
     displayName: Build Windows
     jobs:
-    - template: build/steps/build-windows.yml
+    - template: steps/build-windows.yml
       parameters:
         name: win
         displayName: Build Windows Phase
@@ -14,7 +14,7 @@ stages:
         msbuildExtraArguments: '/nowarn:VSX1000'
         buildConfiguration: $(DefaultBuildConfiguration)
         buildPlatform: $(DefaultBuildPlatform)
-        provisionatorPath : 'build/provisioning/provisioning.csx'
+        provisionatorPath : 'provisioning/provisioning.csx'
     - job: nuget_pack
       dependsOn:
         - win
@@ -27,17 +27,17 @@ stages:
         buildConfiguration: $(DefaultBuildConfiguration)
         nugetPackageVersion : $[ dependencies.win.outputs['debug.winbuild.xamarinformspackageversion'] ]
       steps:
-        - template: build/steps/build-nuget.yml
+        - template: steps/build-nuget.yml
 
   - stage: android
     displayName: Build Android
     jobs:   
-      - template: build/steps/build-android.yml
+      - template: steps/build-android.yml
         parameters:
           vmImage: $(macOSVmImage)
-          provisionatorPath : 'build/provisioning/provisioning.csx'
+          provisionatorPath : 'provisioning/provisioning.csx'
 
-      # - template: build/steps/build-android.yml
+      # - template: steps/build-android.yml
       #   parameters:
       #     name: android_preappcompact
       #     displayName: Build Android [Pre-AppCompat]
@@ -45,9 +45,9 @@ stages:
       #     targetFolder: Xamarin.Forms.ControlGallery.Android/preAppCompat
       #     androidProjectArguments: '/t:"Rebuild;SignAndroidPackage" /p:DefineConstants="TRACE DEBUG FORMS_APPLICATION_ACTIVITY APP" /bl:$(Build.ArtifactStagingDirectory)/android-preappcompact.binlog'
       #     buildConfiguration: $(DefaultBuildConfiguration)
-      #     provisionatorPath : 'build/provisioning/provisioning.csx'
+      #     provisionatorPath : 'provisioning/provisioning.csx'
 
-      # - template: build/steps/build-android.yml
+      # - template: steps/build-android.yml
       #   parameters:
       #     name: android_fast
       #     displayName: Build Android [Fast Renderers]
@@ -55,7 +55,7 @@ stages:
       #     targetFolder: Xamarin.Forms.ControlGallery.Android/newRenderers/
       #     androidProjectArguments: '/t:"Rebuild;SignAndroidPackage" /p:DefineConstants="TRACE DEBUG TEST_EXPERIMENTAL_RENDERERS APP" /bl:$(Build.ArtifactStagingDirectory)/android-newrenderers.binlog'
       #     buildConfiguration: $(DefaultBuildConfiguration)
-      #     provisionatorPath : 'build/provisioning/provisioning.csx'
+      #     provisionatorPath : 'provisioning/provisioning.csx'
 
   - stage: build_osx
     displayName: Build OSX
@@ -74,14 +74,14 @@ stages:
             - msbuild
             - Xamarin.iOS
         variables:
-          provisionator.osxPath : 'build/provisioning/provisioning.csx'
-          provisionator.signPath : 'build/provisioning/provisioning_sign.csx'
+          provisionator.osxPath : 'provisioning/provisioning.csx'
+          provisionator.signPath : 'provisioning/provisioning_sign.csx'
           buildConfiguration: $(DefaultBuildConfiguration)
           iOSCertSecureFileName: 'Xamarin Forms iOS Certificate.p12'
           iOSProvisioningSecureFileName: 'Xamarin Forms iOS Provisioning.mobileprovision'
           monoVersion : $(MONO_VERSION)
         steps:
-          - template: build/steps/build-osx.yml
+          - template: steps/build-osx.yml
 
   # only sign using the private server
   - ${{ if eq(variables['System.TeamProject'], 'devdiv') }}:
@@ -94,7 +94,7 @@ stages:
           pool:
             name: $(signVmImage)
           steps:
-            - template: build/steps/build-sign.yml
+            - template: steps/build-sign.yml
           condition: and(succeeded(), or(eq(variables['Sign'], 'true'), or(eq(variables['Build.SourceBranch'], 'refs/heads/master'), startsWith(variables['Build.SourceBranch'],'refs/tags/'))))
 
 

@@ -59,4 +59,4 @@ schedules:
     include:
     - master
 steps:
-- template: build.yml
+- template: build/build.yml
