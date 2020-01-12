@@ -37,7 +37,7 @@ PowerShell:
 
 var target = Argument("target", "Default");
 var configuration = Argument("configuration", "Debug");
-var teamProject = Argument("TeamProject", "");
+var UseNugets = Argument("UseNugets", "false");
 
 var gitVersion = GitVersion();
 var majorMinorPatch = gitVersion.MajorMinorPatch;
@@ -63,10 +63,10 @@ string monoSDK_macos = "";
 string iOSSDK_macos = "";
 string macSDK_macos = "";
 
-Information ("Team Project: {0}", teamProject);
+Information ("UseNugets: {0}", UseNugets);
 
 // VS 2019
-if(teamProject != "DevDiv")
+if(UseNugets != "true")
 {
     monoMajorVersion = "6.8.0";
     monoPatchVersion = ""; 

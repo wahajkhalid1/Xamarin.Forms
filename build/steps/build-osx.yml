@@ -15,7 +15,7 @@ steps:
     inputs:
       targetType: 'filePath'
       filePath: 'build.sh'
-      arguments: --target provision --TeamProject="$(System.TeamProject)"
+      arguments: --target provision --UseNugets="$(UseNugets)"
 
   - task: UseDotNet@2
     displayName: 'Install .net core $(DOTNET_VERSION)'
@@ -32,14 +32,14 @@ steps:
   
   - task: DownloadBuildArtifacts@0
     displayName: 'Download build artifact nuget'
-    condition: eq(variables['System.TeamProject'], 'devdiv')
+    condition: eq(variables['UseNugets'], 'true')
     inputs:
       artifactName: 'nuget'
       downloadPath: '$(Build.ArtifactsDirectory)'
 
   - task: CopyFiles@2
     displayName: 'Copy Files to: $(System.DefaultWorkingDirectory)'
-    condition: eq(variables['System.TeamProject'], 'devdiv')
+    condition: eq(variables['UseNugets'], 'true')
     inputs:
       SourceFolder: '$(Build.ArtifactsDirectory)/nuget/$(buildConfiguration)'
       TargetFolder: '$(System.DefaultWorkingDirectory)/Nuget'

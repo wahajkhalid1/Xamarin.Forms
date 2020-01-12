@@ -23,6 +23,8 @@ variables:
   value: true
 - name: DOTNET_VERSION
   value: 3.1.100
+- name: UseNugets
+  value: eq(variables['System.TeamProject'], 'devdiv')
 
 resources:
   repositories:
@@ -75,7 +77,6 @@ stages:
     - job: nuget_pack
       dependsOn:
         - win
-        - win_2019
       displayName: Nuget Phase
       condition: succeeded()
       pool:
@@ -89,9 +90,9 @@ stages:
 
   - stage: android
     displayName: Build Android
-    ${{ if eq(variables['System.TeamProject'], 'devdiv') }}:
+    ${{ if eq(variables['UseNugets'], 'true') }}:
       dependsOn: windows
-    ${{ if eq(variables['System.TeamProject'], 'public') }}:
+    ${{ if eq(variables['UseNugets'], 'false') }}:
       dependsOn: []
     jobs:   
       - template: build/steps/build-android.yml
@@ -126,9 +127,9 @@ stages:
 
   - stage: build_osx
     displayName: Build OSX
-    ${{ if eq(variables['System.TeamProject'], 'devdiv') }}:
+    ${{ if eq(variables['UseNugets'], 'true') }}:
       dependsOn: windows
-    ${{ if eq(variables['System.TeamProject'], 'public') }}:
+    ${{ if eq(variables['UseNugets'], 'false') }}:
       dependsOn: []
     jobs:
       - job: osx
