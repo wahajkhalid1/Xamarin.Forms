@@ -23,7 +23,7 @@ variables:
   value: true
 - name: DOTNET_VERSION
   value: 3.1.100
-- name: UseNugtets
+- name: UseNugets
   value: false
 
 resources:
