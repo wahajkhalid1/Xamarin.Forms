@@ -23,6 +23,8 @@ variables:
   value: true
 - name: DOTNET_VERSION
   value: 3.1.100
+- name: UseNugtets
+  value: false
 
 resources:
   repositories:
@@ -58,11 +60,6 @@ schedules:
   branches:
     include:
     - master
-
-parameters:
-- name: UseNugets
-  type: boolean
-  default: false
 
 stages:
   - stage: windows
