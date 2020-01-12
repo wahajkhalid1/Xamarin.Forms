@@ -59,11 +59,6 @@ schedules:
     include:
     - master
 
-parameters:
-- name: UseNugets
-  type: boolean
-  default: true
-
 stages:
   - stage: windows
     displayName: Build Windows
@@ -101,7 +96,7 @@ stages:
             vmImage: $(macOSVmImage)
             provisionatorPath : 'build/provisioning/provisioning.csx'
 
-  - ${{ if eq(parameters.UseNugets, true) }}:
+  - ${{ if eq(variables['UseNugets'], 'false') }}:
     - stage: android
       displayName: Build Android
       dependsOn: []
