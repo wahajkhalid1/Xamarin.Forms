@@ -86,31 +86,23 @@ stages:
       steps:
         - template: build/steps/build-nuget.yml
 
-  - ${{ if eq(variables['UseNugets'], 'true') }}:
-    - stage: android
-      displayName: Build Android
+  - stage: android
+    displayName: Build Android
+    ${{ if eq(variables['System.TeamProject'], 'devdiv') }}:
       dependsOn: windows
-      jobs:   
-        - template: build/steps/build-android.yml
-          parameters:
-            vmImage: $(macOSVmImage)
-            provisionatorPath : 'build/provisioning/provisioning.csx'
-
-  - ${{ if eq(variables['UseNugets'], 'false') }}:
-    - stage: android
-      displayName: Build Android
+    ${{ if eq(variables['System.TeamProject'], 'public') }}:
       dependsOn: []
-      jobs:   
-        - template: build/steps/build-android.yml
-          parameters:
-            vmImage: $(macOSVmImage)
-            provisionatorPath : 'build/provisioning/provisioning.csx'
+    jobs:   
+      - template: build/steps/build-android.yml
+        parameters:
+          vmImage: $(macOSVmImage)
+          provisionatorPath : 'build/provisioning/provisioning.csx'
 
   - stage: build_osx
     displayName: Build OSX
-    ${{ if eq(variables['UseNugets'], 'true') }}:
+    ${{ if eq(variables['System.TeamProject'], 'devdiv') }}:
       dependsOn: windows
-    ${{ if eq(variables['UseNugets'], 'false') }}:
+    ${{ if eq(variables['System.TeamProject'], 'public') }}:
       dependsOn: []
     jobs:
       - job: osx
