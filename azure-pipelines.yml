@@ -24,7 +24,7 @@ variables:
 - name: DOTNET_VERSION
   value: 3.1.100
 - name: UseNugets
-  value: eq(variables['System.TeamProject'], 'devdiv')
+  value: $[eq(variables['System.TeamProject'], 'devdiv')]
 
 resources:
   repositories:
