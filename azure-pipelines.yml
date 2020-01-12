@@ -101,7 +101,7 @@ stages:
             vmImage: $(macOSVmImage)
             provisionatorPath : 'build/provisioning/provisioning.csx'
 
-  ${{ if eq(parameters.UseNugets, true) }}:
+  - ${{ if eq(parameters.UseNugets, true) }}:
     - stage: android
       displayName: Build Android
       dependsOn: []
