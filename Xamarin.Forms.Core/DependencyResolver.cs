@@ -1,6 +1,7 @@
 using System;
 using System.Linq;
 using System.Reflection;
+using Xamarin.Forms.Core.Internals;
 
 namespace Xamarin.Forms.Internals
 {
@@ -47,6 +48,7 @@ namespace Xamarin.Forms.Internals
 			{
 				if(visualType != _defaultVisualType)
 				{
+					Profile.FramePartition("Activate 2 Info");
 					if (type.GetTypeInfo().DeclaredConstructors.Any(info => info.GetParameters().Length == 2))
 					{
 						Profile.FramePartition("Activate 2");
@@ -59,10 +61,11 @@ namespace Xamarin.Forms.Internals
 				// parameterless constructors)
 				if (result == null)
 				{
+					Profile.FramePartition("Activate L Info");
 					if (type.GetTypeInfo().DeclaredConstructors.Any(info => info.GetParameters().Length == args.Length))
 					{
 						Profile.FramePartition("Activate L");
-						result = Activator.CreateInstance(type, args);
+						result = Anticipator.Singleton.Activate(type, args);
 					}
 				}
 			}
