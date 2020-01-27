@@ -170,14 +170,14 @@ namespace Xamarin.Forms.Platform.iOS
 			if (Forms.IsiOS13OrNewer)
 			{
 				if (presentationStyle == UIKit.UIModalPresentationStyle.FullScreen)
-					shouldFire = false; //this is mainly for backwards compatibility
+					shouldFire = false; // This is mainly for backwards compatibility
 			}
 			else
 			{
 				if (presentationStyle == UIKit.UIModalPresentationStyle.Automatic)
 					shouldFire = false;
 				else if (presentationStyle == UIKit.UIModalPresentationStyle.FullScreen)
-					shouldFire = false; //this is mainly for backwards compatibility
+					shouldFire = false; // This is mainly for backwards compatibility
 			}
 
 			if (_appeared && shouldFire)
