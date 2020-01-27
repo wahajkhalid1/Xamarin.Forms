@@ -126,11 +126,11 @@ namespace Xamarin.Forms.Platform.iOS
 
 			modal.DisposeModalAndChildRenderers();
 
-			if (IsModalPresentedOverContext(modal))
+			if (!IsModalPresentedFullScreen(modal))
 				Page.GetCurrentPage()?.SendAppearing();
 
 			return modal;
-		}
+		}	
 
 		Task INavigation.PopToRootAsync()
 		{
@@ -641,11 +641,11 @@ namespace Xamarin.Forms.Platform.iOS
 		}
 
 
-		static bool IsModalPresentedOverContext(Page modal)
+		static bool IsModalPresentedFullScreen(Page modal)
 		{
 			var elementConfiguration = modal as IElementConfiguration<Page>;
 			var presentationStyle = elementConfiguration?.On<PlatformConfiguration.iOS>()?.ModalPresentationStyle();
-			return presentationStyle != null && presentationStyle == PlatformConfiguration.iOSSpecific.UIModalPresentationStyle.OverFullScreen;
+			return presentationStyle != null && presentationStyle == PlatformConfiguration.iOSSpecific.UIModalPresentationStyle.FullScreen;
 		}
 	}
 }
