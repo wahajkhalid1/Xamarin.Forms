@@ -17,7 +17,13 @@ namespace Xamarin.Forms.Platform.iOS
 
 			var elementConfiguration = modal.Element as IElementConfiguration<Page>;
 			if (elementConfiguration?.On<PlatformConfiguration.iOS>()?.ModalPresentationStyle() is PlatformConfiguration.iOSSpecific.UIModalPresentationStyle style)
-				ModalPresentationStyle = style.ToNativeModalPresentationStyle();
+			{
+				var result = style.ToNativeModalPresentationStyle();
+				if(!Forms.IsiOS13OrNewer && result == UIKit.UIModalPresentationStyle.Automatic)
+				{
+					result = UIKit.UIModalPresentationStyle.FullScreen;
+				}
+			}
 
 			UpdateBackgroundColor();
 			View.AddSubview(modal.ViewController.View);
@@ -26,7 +32,9 @@ namespace Xamarin.Forms.Platform.iOS
 
 			modal.ViewController.DidMoveToParentViewController(this);
 			((Page)modal.Element).PropertyChanged += OnModalPagePropertyChanged;
-			PresentationController.Delegate = this;
+
+			if (Forms.IsiOS13OrNewer)
+				PresentationController.Delegate = this;
 		}
 
 
