@@ -12,19 +12,19 @@ using ABuild = Android.OS.Build;
 using AView = Android.Views.View;
 using ARelativeLayout = Android.Widget.RelativeLayout;
 using AToolbar = Android.Support.V7.Widget.Toolbar;
+using System.Threading;
+using System.Collections.Concurrent;
+using System.Runtime.CompilerServices;
+using Xamarin.Forms.Internals;
+using System.Diagnostics;
 
 namespace Xamarin.Forms.Platform.Android
 {
-	/// <summary>
-	/// Computing the results that need to be cached often require calling into the Android OS. 
-	/// Calling into the Android OS off the UIThread is a "gray" operation. E.g. we know not to 
-	/// update UI elements off the UIThread, but what about getting the SdkInt version? Likely
-	/// ok but just the same we want to track ALL Android OS APIs we call off the UIThread.
-	/// 
-	/// All Android OS calls made off the UIThread can be found in the implementations of 
-	/// IAnticipatedValue.Get. Calls off the UIThread into the Android OS should not exist
-	/// elsewhere. 
-	/// </summary>
+	public interface IAnticipatable
+	{
+		object Get();
+	}
+
 	public sealed class AndroidAnticipator : Anticipator
 	{
 		static class Key
@@ -238,28 +238,243 @@ namespace Xamarin.Forms.Platform.Android
 			//});
 		}
 
-		protected override object Activate(Type type, params object[] arguments)
+		//protected override object Activate(Type type, params object[] arguments)
+		//{
+		//	return base.Activate(type, arguments);
+
+		//	object result = null;
+
+		//	if (type == typeof(FLabelRenderer))
+		//		result = new FLabelRenderer((Context)arguments[0]);
+
+		//	if (type == typeof(PageRenderer))
+		//		result = new PageRenderer((Context)arguments[0]);
+
+		//	if (type == typeof(ListViewRenderer))
+		//		result = new ListViewRenderer((Context)arguments[0]);
+
+		//	var hitOrMiss = result == null ? "MISS" : "HIT";
+
+		//	if (result == null)
+		//		result = base.Activate(type, arguments);
+
+		//	Log("ACTIVATOR {0}: {1}", hitOrMiss, type.Name);
+		//	return result;
+		//}
+	}
+
+	internal class Scheduler
+	{
+		private static readonly TimeSpan LoopTimeOut = TimeSpan.FromSeconds(5.0);
+		private readonly Thread _thread;
+		private readonly AutoResetEvent _work;
+		private readonly AutoResetEvent _done;
+		private readonly ConcurrentQueue<Action> _actions;
+
+		internal Scheduler()
 		{
-			return base.Activate(type, arguments);
-
-			//object result = null;
-
-			//if (type == typeof(FLabelRenderer))
-			//	result = new FLabelRenderer((Context)arguments[0]);
-
-			//if (type == typeof(PageRenderer))
-			//	result = new PageRenderer((Context)arguments[0]);
-
-			//if (type == typeof(ListViewRenderer))
-			//	result = new ListViewRenderer((Context)arguments[0]);
-
-			//var hitOrMiss = result == null ? "MISS" : "HIT";
-
-			//if (result == null)
-			//	result = base.Activate(type, arguments);
-
-			//Log("ACTIVATOR {0}: {1}", hitOrMiss, type.Name);
-			//return result;
+			_actions = new ConcurrentQueue<Action>();
+			_work = new AutoResetEvent(false);
+			_done = new AutoResetEvent(false);
+			_thread = new Thread(new ParameterizedThreadStart(Loop));
+			_thread.Start(_work);
 		}
+
+		private void Loop(object argument)
+		{
+			var autoResetEvent = (AutoResetEvent)argument;
+
+			while (autoResetEvent.WaitOne(LoopTimeOut))
+			{
+				while (_actions.Count > 0)
+				{
+					Action action;
+					if (_actions.TryDequeue(out action))
+						action();
+				}
+			}
+
+			_done.Set();
+		}
+
+		internal void Schedule(Action action)
+		{
+			if (action == null)
+				throw new ArgumentNullException(nameof(action));
+
+			_actions.Enqueue(action);
+			_work.Set();
+		}
+
+		internal void Join()
+			=> _done.WaitOne();
+	}
+
+	public abstract class Anticipator
+	{
+		interface IHeapOrCache : IDisposable
+		{
+			void Set(object key, object value);
+			bool TryGet(object key, out object value);
+		}
+
+		sealed class HeapOrCache : IDisposable
+		{
+			sealed class Cache : IHeapOrCache
+			{
+				readonly ConcurrentDictionary<object, object> _dictionary
+					= new ConcurrentDictionary<object, object>();
+
+				public void Set(object key, object value)
+					=> _dictionary.TryAdd(key, value);
+
+				public bool TryGet(object key, out object value)
+					=> _dictionary.TryGetValue(key, out value);
+
+				public void Dispose()
+				{
+					foreach (var pair in _dictionary)
+						(pair.Value as IDisposable)?.Dispose();
+				}
+			}
+
+			sealed class Heap : IHeapOrCache
+			{
+				static ConcurrentBag<object> ActivateBag()
+					=> new ConcurrentBag<object>();
+
+				readonly ConcurrentDictionary<object, object> _dictionary
+					= new ConcurrentDictionary<object, object>();
+				readonly Func<ConcurrentBag<object>> _activateBag = ActivateBag;
+
+				ConcurrentBag<object> Get(object key)
+					=> (ConcurrentBag<object>)_dictionary.GetOrAdd(key, _activateBag);
+
+				public void Set(object key, object value)
+					=> Get(key).Add(value);
+
+				public bool TryGet(object key, out object value)
+					=> Get(key).TryTake(out value);
+
+				public void Dispose()
+				{
+					foreach (var pair in _dictionary)
+					{
+						foreach (var value in ((ConcurrentBag<object>)pair.Value))
+							(value as IDisposable)?.Dispose();
+					}
+				}
+			}
+
+			public static HeapOrCache ActivateCache(Scheduler scheduler) => 
+				new HeapOrCache(scheduler, new Cache());
+
+			public static HeapOrCache ActivateHeap(Scheduler scheduler) => 
+				new HeapOrCache(scheduler, new Heap());
+
+			Scheduler _scheduler;
+			IHeapOrCache _heapOrCache;
+
+			HeapOrCache(Scheduler scheduler, IHeapOrCache container)
+			{
+				_scheduler = scheduler;
+				_heapOrCache = container;
+			}
+
+			void Log(string format, params object[] arguments)
+				=> Profile.WriteLog(format, arguments);
+
+			public object Get<T>(T key = default)
+				where T : IAnticipatable
+			{
+				if (_heapOrCache.TryGet(key, out var value))
+				{
+					Log("CACHE HIT: {0}", key);
+					return value;
+				}
+				Log("CACHE MISS: {0}", key);
+				return key.Get();
+			}
+
+			public void Anticipate<T>(T key = default)
+				where T : IAnticipatable
+			{
+				_scheduler.Schedule(() =>
+				{
+					try
+					{
+						var stopwatch = new Stopwatch();
+						stopwatch.Start();
+						_heapOrCache.Set(key, key.Get());
+						var ticks = stopwatch.ElapsedTicks;
+
+						Log("CASHED: {0}, ms={1}", key, TimeSpan.FromTicks(ticks).Milliseconds);
+					}
+					catch (Exception ex)
+					{
+						Log("EXCEPTION: {0}: {1}", key, ex);
+					}
+				});
+			}
+
+			public void Dispose()
+				=> _heapOrCache.Dispose();
+		}
+		
+		protected struct ClassConstruction : IAnticipatable
+		{
+			private Type _type;
+
+			public ClassConstruction(Type type)
+			{
+				_type = type;
+			}
+
+			object IAnticipatable.Get()
+			{
+				RuntimeHelpers.RunClassConstructor(_type.TypeHandle);
+				return null;
+			}
+
+			public override string ToString()
+			{
+				return ".cctor=" + _type.Name;
+			}
+		}
+
+		readonly Scheduler _scheduler;
+		readonly HeapOrCache _cache;
+		readonly HeapOrCache _heap;
+
+		internal Anticipator()
+		{
+			_scheduler = new Scheduler();
+			_heap = HeapOrCache.ActivateHeap(_scheduler);
+			_cache = HeapOrCache.ActivateCache(_scheduler);
+		}
+
+		internal void AnticipateAllocation<T>(T key = default)
+			where T : IAnticipatable
+			=> _heap.Anticipate(key);
+
+		internal object Allocate<T>(T key = default)
+			where T : IAnticipatable
+			=> _heap.Get(key);
+
+		internal void AnticipateValue<T>(T key = default)
+			where T : IAnticipatable
+			=> _cache.Anticipate(key);
+
+		internal object Get<T>(T key = default)
+			where T : IAnticipatable
+			=> _cache.Get(key);
+
+		public void Dispose()
+		{
+			_scheduler.Join();
+			_cache.Dispose();
+			_heap.Dispose();
+		}
+
 	}
 }
