@@ -25,7 +25,7 @@ namespace Xamarin.Forms.Platform.Android
 	/// IAnticipatedValue.Get. Calls off the UIThread into the Android OS should not exist
 	/// elsewhere. 
 	/// </summary>
-	public class AndroidAnticipator : Anticipator
+	public sealed class AndroidAnticipator : Anticipator
 	{
 		static class Key
 		{
@@ -209,22 +209,22 @@ namespace Xamarin.Forms.Platform.Android
 			if (context == null)
 				throw new ArgumentNullException(nameof(context));
 
-			Anticipate(new Key.SdkVersion());
+			AnticipateValue(new Key.SdkVersion());
 
-			Anticipate(new ClassConstruction(typeof(Resource.Layout)));
-			Anticipate(new ClassConstruction(typeof(Resource.Attribute)));
+			AnticipateValue(new ClassConstruction(typeof(Resource.Layout)));
+			AnticipateValue(new ClassConstruction(typeof(Resource.Attribute)));
 
-			Anticipate(new Key.ActivateView(context, typeof(AToolbar), o => new AToolbar(o)));
-			Anticipate(new Key.ActivateView(context.BaseContext, typeof(ARelativeLayout), o => new ARelativeLayout(o)));
-			Anticipate(new Key.InflateResource(context, FormsAppCompatActivity.ToolbarResource));
+			AnticipateAllocation(new Key.ActivateView(context, typeof(AToolbar), o => new AToolbar(o)));
+			AnticipateAllocation(new Key.ActivateView(context.BaseContext, typeof(ARelativeLayout), o => new ARelativeLayout(o)));
+			AnticipateAllocation(new Key.InflateResource(context, FormsAppCompatActivity.ToolbarResource));
 
-			Anticipate(new Key.IdedResourceExists(context, global::Android.Resource.Attribute.ColorAccent));
-			Anticipate(new Key.NamedResourceExists(context, "colorAccent", "attr"));
+			AnticipateValue(new Key.IdedResourceExists(context, global::Android.Resource.Attribute.ColorAccent));
+			AnticipateValue(new Key.NamedResourceExists(context, "colorAccent", "attr"));
 
-			Anticipate(new Key.InflateIdedResourceFromContext(context, Resource.Layout.FlyoutContent));
+			AnticipateAllocation(new Key.InflateIdedResourceFromContext(context, Resource.Layout.FlyoutContent));
 
-			Anticipate(new Key.ActivateView(context, typeof(FLabelRenderer)));
-			Anticipate(new Key.ActivateView(context, typeof(PageRenderer)));
+			AnticipateAllocation(new Key.ActivateView(context, typeof(FLabelRenderer)));
+			AnticipateAllocation(new Key.ActivateView(context, typeof(PageRenderer)));
 
 			//s_threadPool.Schedule(() => {
 			//	new PageRenderer(s_context);
