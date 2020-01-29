@@ -5,13 +5,12 @@ using Android.Content;
 using Android.Views;
 using Android.Util;
 using Android.App;
-using Xamarin.Forms.Core.Internals;
 using FLabelRenderer = Xamarin.Forms.Platform.Android.FastRenderers.LabelRenderer;
 using ABuildVersionCodes = Android.OS.BuildVersionCodes;
 using ABuild = Android.OS.Build;
 using AView = Android.Views.View;
 using ARelativeLayout = Android.Widget.RelativeLayout;
-using AToolbar = Android.Support.V7.Widget.Toolbar;
+//using AToolbar = Android.Support.V7.Widget.Toolbar;
 using System.Threading;
 using System.Collections.Concurrent;
 using System.Runtime.CompilerServices;
@@ -182,7 +181,7 @@ namespace Xamarin.Forms.Platform.Android
 			s_singleton.AnticipateValue(new ClassConstruction(typeof(Resource.Layout)));
 			s_singleton.AnticipateValue(new ClassConstruction(typeof(Resource.Attribute)));
 
-			s_singleton.AnticipateAllocation(new Key.ActivateView(context, typeof(AToolbar), o => new AToolbar(o)));
+			//s_singleton.AnticipateAllocation(new Key.ActivateView(context, typeof(AToolbar), o => new AToolbar(o)));
 			s_singleton.AnticipateAllocation(new Key.ActivateView(context.BaseContext, typeof(ARelativeLayout), o => new ARelativeLayout(o)));
 			s_singleton.AnticipateAllocation(new Key.InflateResource(context, FormsAppCompatActivity.ToolbarResource));
 

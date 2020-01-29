@@ -65,7 +65,8 @@ namespace Xamarin.Forms.Internals
 					if (type.GetTypeInfo().DeclaredConstructors.Any(info => info.GetParameters().Length == args.Length))
 					{
 						Profile.FramePartition("Activate L");
-						result = Anticipator.Singleton.Activate(type, args);
+						throw new Exception("OOPS!");
+						//result = Anticipator.Singleton.Activate(type, args);
 					}
 				}
 			}
