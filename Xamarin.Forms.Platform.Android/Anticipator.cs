@@ -174,57 +174,25 @@ namespace Xamarin.Forms.Platform.Android
 
 		public static void Initialize(ContextWrapper context)
 		{
-			s_singleton = new AndroidAnticipator(context);
-		}
-
-		static internal ABuildVersionCodes SdkVersion
-			=> (ABuildVersionCodes)s_singleton.Get(new Key.SdkVersion());
-
-		static internal bool IdedResourceExists(Context context, int id)
-			=> (bool)s_singleton.Get(new Key.IdedResourceExists(context, id));
-
-		static internal bool NamedResourceExists(Context context, string name, string type)
-			=> (bool)s_singleton.Get(new Key.NamedResourceExists(context, name, type));
-
-		static internal AView InflateResource(Context context, int id)
-			=> (AView)s_singleton.Get(new Key.InflateResource(context, id));
-
-		static internal AView ActivateView(Context context, Type type)
-			=> (AView)s_singleton.Get(new Key.ActivateView(context, type));
-
-		static string ResourceName(int id)
-			=> id != 0 && s_resourceNames.TryGetValue(id, out var name) ? name : id.ToString();
-
-		static Dictionary<int, string> s_resourceNames = new Dictionary<int, string>
-		{
-			[FormsAppCompatActivity.ToolbarResource] = nameof(FormsAppCompatActivity.ToolbarResource),
-			[global::Android.Resource.Attribute.ColorAccent] = nameof(global::Android.Resource.Attribute.ColorAccent),
-			[Resource.Layout.FlyoutContent] = nameof(Resource.Layout.FlyoutContent),
-		};
-
-		static AndroidAnticipator s_singleton;
-
-		public AndroidAnticipator(ContextWrapper context)
-		{
 			if (context == null)
 				throw new ArgumentNullException(nameof(context));
 
-			AnticipateValue(new Key.SdkVersion());
+			s_singleton.AnticipateValue(new Key.SdkVersion());
 
-			AnticipateValue(new ClassConstruction(typeof(Resource.Layout)));
-			AnticipateValue(new ClassConstruction(typeof(Resource.Attribute)));
+			s_singleton.AnticipateValue(new ClassConstruction(typeof(Resource.Layout)));
+			s_singleton.AnticipateValue(new ClassConstruction(typeof(Resource.Attribute)));
 
-			AnticipateAllocation(new Key.ActivateView(context, typeof(AToolbar), o => new AToolbar(o)));
-			AnticipateAllocation(new Key.ActivateView(context.BaseContext, typeof(ARelativeLayout), o => new ARelativeLayout(o)));
-			AnticipateAllocation(new Key.InflateResource(context, FormsAppCompatActivity.ToolbarResource));
+			s_singleton.AnticipateAllocation(new Key.ActivateView(context, typeof(AToolbar), o => new AToolbar(o)));
+			s_singleton.AnticipateAllocation(new Key.ActivateView(context.BaseContext, typeof(ARelativeLayout), o => new ARelativeLayout(o)));
+			s_singleton.AnticipateAllocation(new Key.InflateResource(context, FormsAppCompatActivity.ToolbarResource));
 
-			AnticipateValue(new Key.IdedResourceExists(context, global::Android.Resource.Attribute.ColorAccent));
-			AnticipateValue(new Key.NamedResourceExists(context, "colorAccent", "attr"));
+			s_singleton.AnticipateValue(new Key.IdedResourceExists(context, global::Android.Resource.Attribute.ColorAccent));
+			s_singleton.AnticipateValue(new Key.NamedResourceExists(context, "colorAccent", "attr"));
 
-			AnticipateAllocation(new Key.InflateIdedResourceFromContext(context, Resource.Layout.FlyoutContent));
+			s_singleton.AnticipateAllocation(new Key.InflateIdedResourceFromContext(context, Resource.Layout.FlyoutContent));
 
-			AnticipateAllocation(new Key.ActivateView(context, typeof(FLabelRenderer)));
-			AnticipateAllocation(new Key.ActivateView(context, typeof(PageRenderer)));
+			s_singleton.AnticipateAllocation(new Key.ActivateView(context, typeof(FLabelRenderer)));
+			s_singleton.AnticipateAllocation(new Key.ActivateView(context, typeof(PageRenderer)));
 
 			//s_threadPool.Schedule(() => {
 			//	new PageRenderer(s_context);
@@ -237,6 +205,36 @@ namespace Xamarin.Forms.Platform.Android
 			//	new DummyDrawable();
 			//});
 		}
+
+		internal static void Join()
+			=> s_singleton.Dispose();
+
+		internal static ABuildVersionCodes SdkVersion
+			=> (ABuildVersionCodes)s_singleton.Get(new Key.SdkVersion());
+
+		internal static bool IdedResourceExists(Context context, int id)
+			=> (bool)s_singleton.Get(new Key.IdedResourceExists(context, id));
+
+		internal static bool NamedResourceExists(Context context, string name, string type)
+			=> (bool)s_singleton.Get(new Key.NamedResourceExists(context, name, type));
+
+		internal static AView InflateResource(Context context, int id)
+			=> (AView)s_singleton.Get(new Key.InflateResource(context, id));
+
+		internal static AView ActivateView(Context context, Type type)
+			=> (AView)s_singleton.Get(new Key.ActivateView(context, type));
+
+		static string ResourceName(int id)
+			=> id != 0 && s_resourceNames.TryGetValue(id, out var name) ? name : id.ToString();
+
+		static Dictionary<int, string> s_resourceNames = new Dictionary<int, string>
+		{
+			[FormsAppCompatActivity.ToolbarResource] = nameof(FormsAppCompatActivity.ToolbarResource),
+			[global::Android.Resource.Attribute.ColorAccent] = nameof(global::Android.Resource.Attribute.ColorAccent),
+			[Resource.Layout.FlyoutContent] = nameof(Resource.Layout.FlyoutContent),
+		};
+
+		static AndroidAnticipator s_singleton = new AndroidAnticipator();
 
 		//protected override object Activate(Type type, params object[] arguments)
 		//{
