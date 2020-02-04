@@ -32,7 +32,6 @@ namespace Xamarin.Forms.Controls
 		public static bool PreloadTestCasesIssuesList { get; set; } = true;
 		public App()
 		{
-			VisualElement.SetDefaultVisual(VisualMarker.Material);
 
 			_testCloudService = DependencyService.Get<ITestCloudService>();
 
