@@ -294,7 +294,7 @@ namespace Xamarin.Forms.Platform.iOS
 			}
 			else
 			{
-				var content = Subviews.FirstOrDefault(v => v is Platform.DefaultRenderer);
+				var content = Subviews[0];
 
 				if (content != null)
 					_contentView = content;
