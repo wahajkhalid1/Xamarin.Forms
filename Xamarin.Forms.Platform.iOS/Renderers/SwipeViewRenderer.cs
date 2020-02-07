@@ -294,10 +294,8 @@ namespace Xamarin.Forms.Platform.iOS
 			}
 			else
 			{
-				var content = Subviews[0];
-
-				if (content != null)
-					_contentView = content;
+				if (Subviews.Length > 0)
+					_contentView = Subviews[0];
 			}
 		}
 
