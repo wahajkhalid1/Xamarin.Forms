@@ -55,11 +55,12 @@ namespace Xamarin.Forms.Platform.Android
 		public SwipeViewRenderer(Context context) : base(context)
 		{
 			SwipeView.VerifySwipeViewFlagEnabled(nameof(SwipeViewRenderer));
+
 			_context = context;
 
-			AutoPackage = false;
+			this.SetClipToOutline(true);
 
-			this.SetClipToOutline(true, Element);
+			AutoPackage = false;
 		}
 
 		protected override void OnElementChanged(ElementChangedEventArgs<SwipeView> e)
